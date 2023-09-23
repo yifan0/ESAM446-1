@@ -1,4 +1,5 @@
 import numpy
+# import sympy
 class Polynomial:
     def __init__(self,order,coefficients):
         self.order = order
@@ -139,4 +140,59 @@ class Polynomial:
                 coefficient = monomial[0]
             coefficients[term_order] += sign*int(coefficient)
         return Polynomial(order,coefficients)
+    def __truediv__(self,other):
+        return RationalPolynomial(self,other)
+    
+class RationalPolynomial:
+    def __init__(self, numerator, denominator):
+        self.numerator = numerator
+        self.denominator = denominator
+    #     self._reduce()
+
+    # def _reduce(self):
+    #     gcd = sympy.gcd(self.numerator,self.denominator)
+    #     num_new,r = sympy.div(self.numerator,gcd,domain='ZZ')
+    #     num_new = str(num_new).replace("**","^")
+    #     print(num_new)
+    #     denom_new,r = sympy.div(self.denominator,gcd,domain='ZZ')
+    #     denom_new = str(denom_new).replace("**","^")
+    #     print(denom_new)
+    #     self.numerator = Polynomial.from_string(num_new)
+    #     self.denominator = Polynomial.from_string(denom_new)
+
+
+    def __repr__(self):
+        string = str(self.numerator) + "/" + str(self.denominator)
+        return string
+    
+    @staticmethod
+    def from_string(string):
+        numerator, denominator = string.split("/")
+        numerator = numerator[1:-1]
+        denominator = denominator[1:-1]
+        numerator = Polynomial.from_string(numerator)
+        denominator = Polynomial.from_string(denominator)
+        return RationalPolynomial(numerator,denominator)
+
+    def __add__(self,other):
+        num_new = self.numerator*other.denominator+self.denominator*other.numerator
+        denom_new = self.denominator*other.denominator
+        return RationalPolynomial(num_new, denom_new)
+    def __neg__(self):
+        num = Polynomial.from_string("-1")*self.numerator
+        return (num, self.denominator)
+    def __sub__(self,other):
+        return self + (-other)
+    def __mul__(self,other):
+        num_new = self.numerator*other.numerator
+        denom_new = self.denominator*other.denominator
+        return RationalPolynomial(num_new,denom_new)        
+    def __truediv__(self,other):
+        num_new = self.numerator*other.denominator
+        denom_new = other.numerator*self.denominator
+        return RationalPolynomial(num_new,denom_new)
+    def __eq__(self,other):
+        if self.numerator*other.denominator == self.denominator*other.numerator:
+            return True
+        return False
     
