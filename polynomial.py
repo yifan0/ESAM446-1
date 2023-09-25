@@ -1,5 +1,6 @@
 import numpy
-# import sympy
+import sympy
+import math
 class Polynomial:
     def __init__(self,order,coefficients):
         self.order = order
@@ -7,7 +8,7 @@ class Polynomial:
         self._reduce()
 
     def _reduce(self):
-        if self.order == 0 & self.coefficients[0] == 0:
+        if self.order == 0 and self.coefficients[0] == 0:
             return
         while self.coefficients[-1] == 0:
             self.order -= 1
@@ -28,9 +29,9 @@ class Polynomial:
             if coefficients[i] == 0:
                 continue
             if coefficients[i] > 0:
-                string += "+" + str(coefficients[i])+"*x^"+str(i)
+                string += "+" + str(coefficients[i])+"*x**"+str(i)
             if coefficients[i] < 0:
-                string += str(coefficients[i])+"*x^"+str(i)
+                string += str(coefficients[i])+"*x**"+str(i)
         # return 0 for empty string
         if (string == ""):
             return str(0)
@@ -147,22 +148,34 @@ class RationalPolynomial:
     def __init__(self, numerator, denominator):
         self.numerator = numerator
         self.denominator = denominator
-    #     self._reduce()
+        self._reduce()
 
-    # def _reduce(self):
-    #     gcd = sympy.gcd(self.numerator,self.denominator)
-    #     num_new,r = sympy.div(self.numerator,gcd,domain='ZZ')
-    #     num_new = str(num_new).replace("**","^")
-    #     print(num_new)
-    #     denom_new,r = sympy.div(self.denominator,gcd,domain='ZZ')
-    #     denom_new = str(denom_new).replace("**","^")
-    #     print(denom_new)
-    #     self.numerator = Polynomial.from_string(num_new)
-    #     self.denominator = Polynomial.from_string(denom_new)
+    def _reduce(self):
+        if (str(self.numerator).isnumeric() or str(self.numerator)[1:].isnumeric()) and str(self.denominator).isnumeric():
+            num = int(str(self.numerator))
+            denom = int(str(self.denominator))
+            gcd = math.gcd(num,denom)
+            self.numerator = int(num/gcd)
+            self.denominator = int(denom/gcd)
+            return
+
+        gcd = sympy.gcd(sympy.sympify(str(self.numerator)),sympy.sympify(str(self.denominator)),domain="ZZ")
+        if (str(self.numerator).isnumeric() or str(self.numerator)[1:].isnumeric()) and str(gcd).isnumeric():
+            num_new = int(int(str(self.numerator))/int(str(gcd)))
+        else:
+            num_new,r = sympy.div(str(self.numerator),str(gcd),domain='ZZ')
+        if (str(self.denominator).isnumeric() or str(self.denominator)[1:].isnumeric()) and str(gcd).isnumeric():
+            denom_new = int(str(self.denominator))/int(str(gcd))
+        else:
+            denom_new,r = sympy.div(str(self.denominator),str(gcd),domain='ZZ')  
+        num_new = str(num_new).replace("**","^")
+        self.numerator = Polynomial.from_string(num_new)
+        denom_new = str(denom_new).replace("**","^")
+        self.denominator = Polynomial.from_string(denom_new)
 
 
     def __repr__(self):
-        string = str(self.numerator) + "/" + str(self.denominator)
+        string = "(" + str(self.numerator) + ")/(" + str(self.denominator) + ")"
         return string
     
     @staticmethod
@@ -180,7 +193,7 @@ class RationalPolynomial:
         return RationalPolynomial(num_new, denom_new)
     def __neg__(self):
         num = Polynomial.from_string("-1")*self.numerator
-        return (num, self.denominator)
+        return RationalPolynomial(num,self.denominator)
     def __sub__(self,other):
         return self + (-other)
     def __mul__(self,other):
