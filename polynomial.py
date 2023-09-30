@@ -170,7 +170,7 @@ class RationalPolynomial:
             denom_new,r = sympy.div(str(self.denominator),str(gcd),domain='ZZ')  
         num_new = str(num_new).replace("**","^")
         self.numerator = Polynomial.from_string(num_new)
-        denom_new = str(denom_new).replace("**","^")
+        denom_new = str(int(denom_new)).replace("**","^")
         self.denominator = Polynomial.from_string(denom_new)
 
 
