@@ -165,12 +165,12 @@ class RationalPolynomial:
         else:
             num_new,r = sympy.div(str(self.numerator),str(gcd),domain='ZZ')
         if (str(self.denominator).isnumeric() or str(self.denominator)[1:].isnumeric()) and str(gcd).isnumeric():
-            denom_new = int(str(self.denominator))/int(str(gcd))
+            denom_new = int(int(str(self.denominator))/int(str(gcd)))
         else:
             denom_new,r = sympy.div(str(self.denominator),str(gcd),domain='ZZ')  
         num_new = str(num_new).replace("**","^")
         self.numerator = Polynomial.from_string(num_new)
-        denom_new = str(int(denom_new)).replace("**","^")
+        denom_new = str(denom_new).replace("**","^")
         self.denominator = Polynomial.from_string(denom_new)
 
 
