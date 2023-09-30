@@ -22,13 +22,13 @@ def test_polynomial_addition2():
     c = Polynomial.from_string("-2 + 6*x^2 + 2*x^3")
     assert a + b == c
 
-def test_polynomial_addition2():
+def test_polynomial_addition3():
     a = Polynomial.from_string("-3 - x^2 + 2*x^3")
     b = Polynomial.from_string("1 + 7*x^2")
     c = Polynomial.from_string("-2 + 6*x^2 + 2*x^3")
     assert a + b == c
 
-def test_polynomial_addition3():
+def test_polynomial_addition4():
     a = Polynomial.from_string("-3 -x -7*x^2")
     b = Polynomial.from_string("1 + 7*x^2")
     c = Polynomial.from_string("-2 - x")
