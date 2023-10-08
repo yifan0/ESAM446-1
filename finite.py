@@ -118,3 +118,33 @@ class DifferenceNonUniformGrid(Difference):
                 D[i,(i-jmax+j+grid.N)%grid.N] = a[j]
         self.matrix = D
         pass
+
+class CenteredFiniteDifference(Difference):
+    def __init__(self,grid):
+        h = grid.dx
+        N = grid.N
+        j = [-1,0,1]
+        diags = np.array([-1/(2*h),0,1/(2*h)])
+        matrix = sparse.diags(diags, offsets=j, shape=[N,N])
+        matrix = matrix.tocsr()
+        matrix[-1,0] = 1/(2*h)
+        matrix[0,-1] = -1/(2*h)
+        self.matrix = matrix
+
+class CenteredFiniteDifference4(Difference):
+    def __init__(self,grid):
+        h = grid.dx
+        N = grid.N
+        j = [-2,-1,0,1,2]
+        diags = np.array([1,-8,0,8,-1]/(12*h))
+        matrix = sparse.diags(diags, offsets=j, shape=[N,N])
+        matrix = matrix.tocsr()
+        matrix[-2,0] = -1/(12*h)
+        matrix[-1,0] = 8/(12*h)
+        matrix[-1,1] = -1/(12*h)
+        
+        matrix[0,-2] = 1/(12*h)
+        matrix[0,-1] = -8/(12*h)
+        matrix[1,-1] = 1/(12*h)
+        self.matrix = matrix
+
