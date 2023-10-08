@@ -1,0 +1,30 @@
+# numpy, scipy, matplotlib, jupyter, pytest
+# allclose
+# github repository, add lecoanet
+# git add, commit, push
+# .github/workflow, python-app.yml
+
+Sep 27
+finite difference on eigenfunction
+
+f_i' = (1/2h)(f_{i+1}-f_{i-1})
+take f_i = e^(ikx), f_i' = ik e^(ikx)
+f_{i+1}-f_{i-1} = e^(ik(x_i+h)) - e^(ik(x_i-h))
+= ...
+= f_i 2 i sin(kh)
+(f_{i+1}-f_{i-1})/2h = f_i i sin(kh)/h
+\approx f_i i (k+O(h^2))
+
+(1/12)(-f_{i+2} + 8f_{i+1} - 8f_{i-1} + f_{i-2}) = f_i' + O(h^4)
+Try Fourier mode f_i = e^{ikx_i}
+\Rightarrow f_i' = (-e^{i2kh}+8e^{ikh}-8e^{-ikh} + e^{-i2kh})/12h f_i
+\\= f_i i (4/3 sin(kh) - 1/6 sin(2kh))/h
+with or without Fourier mode:
+\\Fourier mode gives dependency on k
+\\approximation always gives 0 when kh = pi, restricting h to be smaller than pi/k
+\\fraction error
+
+Sep 29
+derivative matrix D 
+sparse matrix, csr matrix
+calculate stencil matrix
