@@ -1,5 +1,6 @@
 import numpy as np
-
+from scipy.special import factorial
+from scipy import sparse
 class Timestepper:
 
     def __init__(self):
@@ -13,6 +14,7 @@ class Timestepper:
         self.iter += 1
         
     def evolve(self, dt, time):
+        print("dt =",dt)
         while self.t < time - 1e-8:
             self.step(dt)
 
@@ -93,7 +95,69 @@ class AdamsBashforth(ExplicitTimestepper):
 
     def __init__(self, u, f, steps, dt):
         super().__init__(u, f)
-        pass
+        self.steps = steps
+        self.dt = dt
 
     def _step(self, dt):
-        pass
+        # print("iteration =", self.iter)
+        N = np.size(self.u)
+        # print("IC =",self.u)
+        if (self.iter == 0):
+            # initialize list of f(u^n)
+            global f_vec
+            f_vec = np.zeros((self.steps,N))
+            f_vec[0] = np.copy(self.u)
+            S_len = self.iter + 1
+            S = np.zeros((S_len,S_len))
+            for i in range(S_len):
+                for j in range(S_len):
+                    S[i,j] = 1/factorial(j)*(-i*dt)**j
+            b = [0]*S_len
+            b[0] = dt
+            a = b @ np.linalg.inv(S)
+            f_mat = np.reshape(f_vec[0],(N,1))
+            f_mat = self.f(f_mat)
+            # print(f_vec)
+            return self.u + f_mat @ a
+
+        # first (s-1) timesteps
+        if (self.iter < self.steps and self.iter > 0):
+            # print("iter = ",self.iter)
+            S_len = self.iter + 1
+            for i in range(1,self.iter+1):
+                f_vec[i] = np.copy(f_vec[i-1])
+            f_vec[0] = np.copy(self.u)
+            S = np.zeros((S_len,S_len))
+            for i in range(S_len):
+                for j in range(S_len):
+                    S[i,j] = 1/factorial(j)*(-i*dt)**j
+            b = [0]*S_len
+            for i in range(S_len):
+                b[i] = 1/factorial(i+1)*dt**(i+1)
+            a = b @ np.linalg.inv(S)
+            f_mat = np.transpose(f_vec[0:S_len])
+            f_mat = self.f(f_mat)
+            # print(f_vec)
+            return self.u + f_mat @ a
+
+        # b = [dt,dt**2/2!,...dt**s/s!]
+        b = [0]*self.steps
+        for i in range(self.steps):
+            b[i] = 1/factorial(i+1)*dt**(i+1)
+        
+        # S is factorial coefficient matrix
+        S = np.zeros((self.steps,self.steps))
+        for i in range(self.steps):
+            for j in range(self.steps):
+                S[i,j] = 1/factorial(j)*(-i*dt)**j
+        # a is the stencil
+        a = b @ np.linalg.inv(S)
+        # print("a =",a)
+        # replace old row
+        for i in range(1,self.steps):
+            f_vec[i] = np.copy(f_vec[i-1])
+        f_vec[0] = np.copy(self.u)
+        f_mat = np.transpose(f_vec)
+        f_mat = self.f(f_mat)
+        return self.u + f_mat @ a
+
