@@ -189,8 +189,60 @@ class CrankNicolson(ImplicitTimestepper):
 class BackwardDifferentiationFormula(ImplicitTimestepper):
 
     def __init__(self, u, L, steps):
-        pass
+        super().__init__(u,L)
+        N = len(u)
+        self.I = sparse.eye(N, N)
+        self.steps = steps
 
     def _step(self, dt):
-        pass
+        if (self.iter == 0):
+        # if (True):
+            # print("iter =",self.iter)
+            N = len(self.u)
+            # initialize u_vec, (s+1)XN
+            global u_vec
+            u_vec = np.zeros((self.steps+1,N))
+            u_vec[0] = np.copy(self.u)
+            # initialize A, 1X(s+1)
+            global A
+            A = np.zeros(self.steps+1)
+            # BackwardEuler
+            LHS = self.I - dt*self.L.matrix
+            return spla.spsolve(LHS, self.u)
+        # first s timesteps
+        if (self.iter < self.steps and self.iter > 0):
+            S_len = self.iter + 2
+            for i in reversed(range(1,self.iter+1)):
+                u_vec[i] = np.copy(u_vec[i-1])
+            u_vec[0] = np.copy(self.u)
+            S = np.zeros((S_len,S_len))
+            for i in range(S_len):
+                for j in range(S_len):
+                    S[i,j] = 1/factorial(j)*(-i*dt)**j
+            b = [0]*S_len
+            b[1] = 1
+            a = b @ np.linalg.inv(S)
+            A[0:S_len] = a
+            LHS = self.L.matrix - A[0]*self.I
+            return spla.spsolve(LHS,A[1:self.iter+2]@u_vec[0:self.iter+1])
+        # self.iter >= self.steps
+        b = [0]*(self.steps+1)
+        b[1] = 1
+        # S is factorial coefficient matrix
+        S = np.zeros((self.steps+1,self.steps+1))
+        for i in range(self.steps+1):
+            for j in range(self.steps+1):
+                S[i,j] = 1/factorial(j)*(-i*dt)**j
+        # a is the stencil
+        a = b @ np.linalg.inv(S)
+        A = a
+        # replace old row
+        for i in reversed(range(1,self.steps+1)):
+            u_vec[i] = np.copy(u_vec[i-1])
+        u_vec[0] = np.copy(self.u)
 
+        LHS = self.L.matrix - A[0]*self.I
+        return spla.spsolve(LHS,A[1:]@u_vec[:-1])
+        # if (self.iter == self.steps):
+        #     self.LU = spla.splu(LHS.tocsc(), permc_spec='NATURAL')
+        # return self.LU.solve(A[1:]@u_vec[:-1])
