@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.special import factorial
 from scipy import sparse
+import scipy.sparse.linalg as spla
 class Timestepper:
 
     def __init__(self):
@@ -14,7 +15,6 @@ class Timestepper:
         self.iter += 1
         
     def evolve(self, dt, time):
-        print("dt =",dt)
         while self.t < time - 1e-8:
             self.step(dt)
 
@@ -106,7 +106,10 @@ class AdamsBashforth(ExplicitTimestepper):
             # initialize list of f(u^n)
             global f_vec
             f_vec = np.zeros((self.steps,N))
-            f_vec[0] = np.copy(self.u)
+            f_vec[0] = np.copy(self.f(self.u))
+            # initialize A
+            global A
+            A = np.zeros(self.steps)
             S_len = self.iter + 1
             S = np.zeros((S_len,S_len))
             for i in range(S_len):
@@ -115,18 +118,15 @@ class AdamsBashforth(ExplicitTimestepper):
             b = [0]*S_len
             b[0] = dt
             a = b @ np.linalg.inv(S)
-            f_mat = np.reshape(f_vec[0],(N,1))
-            f_mat = self.f(f_mat)
-            # print(f_vec)
-            return self.u + f_mat @ a
+            A[0] = a
+            return self.u + A @ f_vec
 
         # first (s-1) timesteps
         if (self.iter < self.steps and self.iter > 0):
-            # print("iter = ",self.iter)
             S_len = self.iter + 1
-            for i in range(1,self.iter+1):
+            for i in reversed(range(1,self.iter+1)):
                 f_vec[i] = np.copy(f_vec[i-1])
-            f_vec[0] = np.copy(self.u)
+            f_vec[0] = np.copy(self.f(self.u))
             S = np.zeros((S_len,S_len))
             for i in range(S_len):
                 for j in range(S_len):
@@ -135,10 +135,8 @@ class AdamsBashforth(ExplicitTimestepper):
             for i in range(S_len):
                 b[i] = 1/factorial(i+1)*dt**(i+1)
             a = b @ np.linalg.inv(S)
-            f_mat = np.transpose(f_vec[0:S_len])
-            f_mat = self.f(f_mat)
-            # print(f_vec)
-            return self.u + f_mat @ a
+            A[0:S_len] = a
+            return self.u + A @ f_vec
 
         # b = [dt,dt**2/2!,...dt**s/s!]
         b = [0]*self.steps
@@ -152,12 +150,47 @@ class AdamsBashforth(ExplicitTimestepper):
                 S[i,j] = 1/factorial(j)*(-i*dt)**j
         # a is the stencil
         a = b @ np.linalg.inv(S)
-        # print("a =",a)
+        A = a
         # replace old row
-        for i in range(1,self.steps):
+        for i in reversed(range(1,self.steps)):
             f_vec[i] = np.copy(f_vec[i-1])
-        f_vec[0] = np.copy(self.u)
-        f_mat = np.transpose(f_vec)
-        f_mat = self.f(f_mat)
-        return self.u + f_mat @ a
+        f_vec[0] = np.copy(self.f(self.u))
+        return self.u + A @ f_vec
+
+
+class ImplicitTimestepper(Timestepper):
+
+    def __init__(self, u, L):
+        super().__init__()
+        self.u = u
+        self.L = L
+        N = len(u)
+        self.I = sparse.eye(N, N)
+
+class BackwardEuler(ImplicitTimestepper):
+
+    def _step(self, dt):
+        if dt != self.dt:
+            self.LHS = self.I - dt*self.L.matrix
+            self.LU = spla.splu(self.LHS.tocsc(), permc_spec='NATURAL')
+        return self.LU.solve(self.u)
+
+
+class CrankNicolson(ImplicitTimestepper):
+
+    def _step(self, dt):
+        if dt != self.dt:
+            self.LHS = self.I - dt/2*self.L.matrix
+            self.RHS = self.I + dt/2*self.L.matrix
+            self.LU = spla.splu(self.LHS.tocsc(), permc_spec='NATURAL')
+        return self.LU.solve(self.RHS @ self.u)
+
+
+class BackwardDifferentiationFormula(ImplicitTimestepper):
+
+    def __init__(self, u, L, steps):
+        pass
+
+    def _step(self, dt):
+        pass
 
