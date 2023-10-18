@@ -206,6 +206,11 @@ class BackwardDifferentiationFormula(ImplicitTimestepper):
             # initialize A, 1X(s+1)
             global A
             A = np.zeros(self.steps+1)
+            # initialize dt_vec, 1X(s+1)
+            global dt_vec
+            dt_vec = np.zeros(self.steps+1)
+            for i in range(self.steps+1):
+                dt_vec[i] = -i*dt
             # BackwardEuler
             LHS = self.I - dt*self.L.matrix
             return spla.spsolve(LHS, self.u)
@@ -229,10 +234,20 @@ class BackwardDifferentiationFormula(ImplicitTimestepper):
         b = [0]*(self.steps+1)
         b[1] = 1
         # S is factorial coefficient matrix
+        # S = np.zeros((self.steps+1,self.steps+1))
+        # for i in range(self.steps+1):
+        #     for j in range(self.steps+1):
+        #         S[i,j] = 1/factorial(j)*(-i*dt)**j
+        # rotate dt_vec
+        dt_vec = dt_vec - dt
+        for i in reversed(range(1,self.steps+1)):
+            dt_vec[i] = dt_vec[i-1]
+        dt_vec[0] = 0
+        # S based on dt_vec
         S = np.zeros((self.steps+1,self.steps+1))
         for i in range(self.steps+1):
             for j in range(self.steps+1):
-                S[i,j] = 1/factorial(j)*(-i*dt)**j
+                S[i,j] = 1/factorial(j)*(dt_vec[i])**j
         # a is the stencil
         a = b @ np.linalg.inv(S)
         A = a
