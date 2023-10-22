@@ -49,20 +49,25 @@ class SoundWave:
         N = len(u)
         I = sparse.eye(N, N)
         Z = sparse.csr_matrix((N, N))
-
-        M00 = rho0*I
+        if np.isscalar(rho0):
+            M00 = rho0*I
+        else:
+            M00 = np.diag(rho0)
         M01 = Z
         M10 = Z
         M11 = I
         self.M = sparse.bmat([[M00, M01],
-                              [M10, M11]])
+                            [M10, M11]])
 
         L00 = Z
         L01 = d.matrix
-        L10 = gammap0*d.matrix
+        if np.isscalar(gammap0):
+            L10 = gammap0*d.matrix
+        else:
+            L10 = np.diag(gammap0)@d.matrix
         L11 = Z
         self.L = sparse.bmat([[L00, L01],
-                              [L10, L11]])
+                            [L10, L11]])
 
         self.F = lambda X: 0*X.data
 
