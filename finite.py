@@ -53,7 +53,6 @@ class DifferenceUniformGrid(Difference):
         for k in range(0,kmax+1):
             for j in range(jmin,jmax+1):
                 S[k,j-jmin] = 1/factorial(k)*(j*grid.dx)**k
-        print(S)
         # solve for a
         a = np.linalg.inv(S) @ b
         shape = [grid.N, grid.N]
