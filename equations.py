@@ -80,6 +80,6 @@ class ReactionDiffusion:
 
         self.M = sparse.eye(N, N)
         self.L = -D*d2.matrix
-        
-        self.F = lambda c: c*(c_target-c)
+
+        self.F = lambda c: c.data*(c_target-c.data)
 
