@@ -31,6 +31,16 @@ class ExplicitTimestepper(Timestepper):
         super().__init__()
         self.X = eq_set.X
         self.F = eq_set.F
+        if hasattr(eq_set, 'BC'):
+            self.BC = eq_set.BC
+        else:
+            self.BC = None
+
+    def step(self, dt):
+        super().step(dt)
+        if self.BC:
+            self.BC(self.X)
+            self.X.scatter()
 
 
 class ImplicitTimestepper(Timestepper):
@@ -114,6 +124,8 @@ class Multistage(ExplicitTimestepper):
             # this loop is slow -- should make K_list a 2D array
             for j in range(i):
                 X_list[i].data += self.a[i, j]*dt*K_list[j]
+            if self.BC:
+                self.BC(X_list[i])
 
         K_list[-1] = self.F(X_list[-1])
 
@@ -181,7 +193,6 @@ class CrankNicolson(ImplicitTimestepper):
             self.RHS = self.M - dt/2*self.L
             self.LU = spla.splu(self.LHS.tocsc(), permc_spec='NATURAL')
         return self._LUsolve(apply_matrix(self.RHS, self.X.data, self.axis))
-
 
 
 class BackwardDifferentiationFormula(ImplicitTimestepper):
@@ -332,7 +343,6 @@ class CNAB(IMEXTimestepper):
             RHS = self.M @ self.X.data - 0.5*dt*self.L @ self.X.data + 3/2*dt*self.FX - 1/2*dt*self.FX_old
             self.FX_old = self.FX
             return self.LU.solve(RHS)
-
 
 
 class BDFExtrapolate(IMEXTimestepper):

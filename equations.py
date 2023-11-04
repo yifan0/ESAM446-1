@@ -230,3 +230,65 @@ class ViscousBurgers2D:
         self.t += dt
         self.iter += 1
         pass
+
+class DiffusionBC:
+
+    def __init__(self, c, D, spatial_order, domain):
+        self.t = 0
+        self.iter = 0
+        self.dt = None
+        grid_x,grid_y = domain.grids
+        d2x = finite.DifferenceUniformGrid(2, spatial_order, grid_x, 0)
+        d2y = finite.DifferenceUniformGrid(2, spatial_order, grid_y, 1)
+        dx = finite.DifferenceUniformGrid(1, spatial_order, grid_x, 0)
+        dy = finite.DifferenceUniformGrid(1, spatial_order, grid_y, 1)
+        class Diffusionx:
+            def __init__(self, c, D, d2x):
+                self.X = StateVector([c], axis=0)
+                N = c.shape[0]
+                M = sparse.eye(N, N)
+                M = M.tocsr()
+                M[0,:] = 0
+                M[-1,:] = 0
+                M.eliminate_zeros()
+                self.M = M
+                L = -D*d2x.matrix
+                L = L.tocsr()
+                L[0,0] = 1
+                BC_vector = np.zeros(N)
+                # 2nd order accurate
+                BC_vector[-3] = (1/2)/(grid_x.dx)
+                BC_vector[-2] = -2/(grid_x.dx)
+                BC_vector[-1] = (3/2)/(grid_x.dx)
+                L[-1,:] = BC_vector
+                L.eliminate_zeros()
+                self.L = L
+
+
+        class Diffusiony:
+            def __init__(self, c, D, d2y):
+                self.X = StateVector([c], axis=1)
+                N = c.shape[1]
+                self.M = sparse.eye(N, N)
+                self.L = -D*d2y.matrix
+        diffx = Diffusionx(c,D,d2x)
+        diffy = Diffusiony(c,D,d2y)
+        # Crank-Nicolson for diffusion
+        self.ts_x = CrankNicolson(diffx,0)
+        self.ts_y = CrankNicolson(diffy,1)
+
+    def step(self, dt):
+        self.ts_x.step(dt/2)
+        self.ts_y.step(dt/2)
+        self.ts_y.step(dt/2)
+        self.ts_x.step(dt/2)
+        self.t += dt
+        self.iter += 1
+
+
+class Wave2DBC:
+
+    def __init__(self, u, v, p, spatial_order, domain):
+        pass
+
+
