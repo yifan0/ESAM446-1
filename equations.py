@@ -307,8 +307,8 @@ class Wave2DBC:
             return v3
         self.F = f
         def BC(X):
-            X.data[0:N,0] = 0
-            X.data[0:N,-1] = 0
+            X.data[0,0:N] = 0
+            X.data[N-1,0:N] = 0
         self.BC = BC
 
 
