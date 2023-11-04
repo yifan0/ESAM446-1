@@ -289,6 +289,26 @@ class DiffusionBC:
 class Wave2DBC:
 
     def __init__(self, u, v, p, spatial_order, domain):
-        pass
+        self.t = 0
+        self.iter = 0
+        self.dt = None
+        grid_x,grid_y = domain.grids
+        d2x = finite.DifferenceUniformGrid(2, spatial_order, grid_x, 0)
+        d2y = finite.DifferenceUniformGrid(2, spatial_order, grid_y, 1)
+        dx = finite.DifferenceUniformGrid(1, spatial_order, grid_x, 0)
+        dy = finite.DifferenceUniformGrid(1, spatial_order, grid_y, 1)
+        self.X = StateVector([u,v,p])
+        N = len(u)
+        def f(X):
+            v3 = np.zeros((3*N,N))
+            v3[0:N,:] = - (dx@X.data[2*N:3*N,:])
+            v3[N:2*N,:] = - (dy@X.data[2*N:3*N,:])
+            v3[2*N:3*N,:] = - (dx@X.data[0:N,:]) - (dy@X.data[N:2*N,:])
+            return v3
+        self.F = f
+        def BC(X):
+            X.data[:,0] = 0
+            X.data[:,-1] = 0
+        self.BC = BC
 
 
