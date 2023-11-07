@@ -254,6 +254,7 @@ class DiffusionBC:
                 self.M = M
                 L = -D*d2x.matrix
                 L = L.tocsr()
+                L[0,:] = 0
                 L[0,0] = 1
                 BC_vector = np.zeros(N)
                 # 2nd order accurate
