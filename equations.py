@@ -313,3 +313,87 @@ class Wave2DBC:
         self.BC = BC
 
 
+class ReactionDiffusionFI:
+    
+    def __init__(self, c, D, spatial_order, grid):
+        self.X = StateVector([c])
+        d2 = finite.DifferenceUniformGrid(2, spatial_order, grid)
+        self.N = len(c)
+        I = sparse.eye(self.N)
+        
+        self.M = I
+        self.L = -D*d2.matrix
+
+        def F(X):
+            return X.data*(1-X.data)
+        self.F = F
+        
+        def J(X):
+            c_matrix = sparse.diags(X.data)
+            return sparse.eye(self.N) - 2*c_matrix
+        
+        self.J = J
+
+
+class BurgersFI:
+    
+    def __init__(self, u, nu, spatial_order, grid):
+        self.t = 0
+        self.iter = 0
+        self.dt = None
+        d = finite.DifferenceUniformGrid(1, spatial_order, grid)
+        d2 = finite.DifferenceUniformGrid(2, spatial_order, grid)
+        self.X = StateVector([u])
+        N = len(u)
+        self.M = sparse.eye(N, N)
+        self.L = -nu*d2.matrix
+        def F(X):
+            return - X.data*(d@X.data)
+        self.F = F
+        def J(X):
+            return -sparse.diags(d@X.data)
+        self.J = J
+
+class ReactionTwoSpeciesDiffusion:
+    
+    def __init__(self, X, D, r, spatial_order, grid):
+        pass
+
+
+
+# import pytest
+# import numpy as np
+# import finite
+# import timesteppers
+# import equations
+# error_burgers = {(100, 0.5): 0.03, (100, 1): 0.04, (100, 2): 0.05, (100, 4): 0.15,
+#                  (200, 0.5): 0.0015, (200, 1): 0.002, (200, 2): 0.005, (200, 4): 0.02,
+#                  (400, 0.5): 0.0003, (400, 1): 0.0003, (400, 2): 0.001, (400, 4): 0.004}
+# resolution = 100
+# alpha = 4
+
+# grid = finite.UniformPeriodicGrid(resolution, 5)
+# x = grid.values
+
+# u = np.zeros(resolution)
+# nu = 1e-2
+# burgers = equations.BurgersFI(u, nu, 6, grid)
+# ts = timesteppers.CrankNicolsonFI(burgers)
+
+# IC = 0*x
+# for i, xx in enumerate(x):
+#     if xx > 1 and xx <= 2:
+#         IC[i] = (xx-1)
+#     elif xx > 2 and xx < 3:
+#         IC[i] = (3-xx)
+
+# u[:] = IC
+# dt = alpha*grid.dx
+
+# ts.evolve(dt, 3-1e-5)
+
+# u_target = np.loadtxt('solutions/u_HW8_%i.dat' %resolution)
+# error = np.max(np.abs(u - u_target))
+# error_est = error_burgers[(resolution, alpha)]
+# print("error = ",error)
+# print("err_est =",error_est)

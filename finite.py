@@ -135,16 +135,7 @@ class DifferenceUniformGrid(Difference):
         if jmin > 0:
             for i in range(jmin):
                 if isinstance(grid, UniformNonPeriodicGrid):
-                    # S[ii,jj] = (jj-i)^ii/(ii)!
-                    S = np.zeros((self.dof,self.dof))
-                    for ii in range(self.dof):
-                        for jj in range(self.dof):
-                            S[ii,jj] = 1/factorial(ii)*((jj-i)*self.dx)**ii
-                    b = np.zeros(self.dof)
-                    b[self.derivative_order] = 1.
-                    # nonperiodic stencil
-                    npstencil = np.linalg.solve(S,b)
-                    matrix[i,0:self.dof] = npstencil
+                    pass
                 else:
                     matrix[i,-jmin+i:] = self.stencil[:jmin-i]
 
@@ -152,15 +143,7 @@ class DifferenceUniformGrid(Difference):
         if jmax > 0:
             for i in range(jmax):
                 if isinstance(grid, UniformNonPeriodicGrid):
-                    S = np.zeros((self.dof,self.dof))
-                    for ii in range(self.dof):
-                        for jj in range(self.dof):
-                            S[ii,jj] = 1/factorial(ii)*(((grid.N-self.dof+jj)-(grid.N-jmax+i))*self.dx)**ii
-                    b = np.zeros(self.dof)
-                    b[self.derivative_order] = 1.
-                    # nonperiodic stencil
-                    npstencil = np.linalg.solve(S,b)
-                    matrix[-jmax+i,-self.dof:] = npstencil
+                    pass
                 else:
                     matrix[-jmax+i,:i+1] = self.stencil[-i-1:]
         self.matrix = matrix
