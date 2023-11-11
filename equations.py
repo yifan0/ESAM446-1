@@ -357,43 +357,45 @@ class BurgersFI:
 class ReactionTwoSpeciesDiffusion:
     
     def __init__(self, X, D, r, spatial_order, grid):
-        pass
+        self.t = 0
+        self.iter = 0
+        self.dt = None
+        d2 = finite.DifferenceUniformGrid(2, spatial_order, grid)
+        d = finite.DifferenceUniformGrid(1, spatial_order, grid)
+        self.X = X
+        N = len(X.variables[0])
+
+        I = sparse.eye(N, N)
+        Z = sparse.csr_matrix((N, N))
+
+        M00 = I
+        M01 = Z
+        M10 = Z
+        M11 = I
+        self.M = sparse.bmat([[M00, M01],
+                            [M10, M11]])
+
+        L00 = -(D*d2.matrix)
+        L01 = Z
+        L10 = Z
+        L11 = -(D*d2.matrix)
+        self.L = sparse.bmat([[L00, L01],
+                            [L10, L11]])
+        def F(X):
+            comb = np.zeros(2*N)
+            comb[0:N] = X.data[0:N]*(1-X.data[0:N]-X.data[N:2*N])
+            comb[N:2*N] = r*X.data[N:2*N]*(X.data[0:N]-X.data[N:2*N])
+            return comb
+        self.F = F
+        def J(X):
+            J00 = sparse.diags(1-X.data[N:2*N]-2*X.data[0:N])
+            J01 = sparse.diags(-(X.data[0:N]))
+            J10 = sparse.diags(r*X.data[N:2*N])
+            J11 = sparse.diags(r*X.data[0:N]-2*r*X.data[N:2*N])
+            Jb = sparse.bmat([[J00, J01],
+                              [J10, J11]])
+            return Jb
+        self.J = J
 
 
 
-# import pytest
-# import numpy as np
-# import finite
-# import timesteppers
-# import equations
-# error_burgers = {(100, 0.5): 0.03, (100, 1): 0.04, (100, 2): 0.05, (100, 4): 0.15,
-#                  (200, 0.5): 0.0015, (200, 1): 0.002, (200, 2): 0.005, (200, 4): 0.02,
-#                  (400, 0.5): 0.0003, (400, 1): 0.0003, (400, 2): 0.001, (400, 4): 0.004}
-# resolution = 100
-# alpha = 4
-
-# grid = finite.UniformPeriodicGrid(resolution, 5)
-# x = grid.values
-
-# u = np.zeros(resolution)
-# nu = 1e-2
-# burgers = equations.BurgersFI(u, nu, 6, grid)
-# ts = timesteppers.CrankNicolsonFI(burgers)
-
-# IC = 0*x
-# for i, xx in enumerate(x):
-#     if xx > 1 and xx <= 2:
-#         IC[i] = (xx-1)
-#     elif xx > 2 and xx < 3:
-#         IC[i] = (3-xx)
-
-# u[:] = IC
-# dt = alpha*grid.dx
-
-# ts.evolve(dt, 3-1e-5)
-
-# u_target = np.loadtxt('solutions/u_HW8_%i.dat' %resolution)
-# error = np.max(np.abs(u - u_target))
-# error_est = error_burgers[(resolution, alpha)]
-# print("error = ",error)
-# print("err_est =",error_est)
