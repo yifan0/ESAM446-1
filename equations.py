@@ -351,7 +351,8 @@ class BurgersFI:
             return - X.data*(d@X.data)
         self.F = F
         def J(X):
-            return -sparse.diags(d@X.data)
+            x_diag = sparse.diags(X.data)
+            return -(d.matrix@x_diag)
         self.J = J
 
 class ReactionTwoSpeciesDiffusion:
@@ -399,3 +400,63 @@ class ReactionTwoSpeciesDiffusion:
 
 
 
+# import pytest
+# import numpy as np
+# import finite
+# import timesteppers
+# import equations
+# error_burgers = {(100, 0.5): 0.03, (100, 1): 0.04, (100, 2): 0.05, (100, 4): 0.15,
+#                  (200, 0.5): 0.0015, (200, 1): 0.002, (200, 2): 0.005, (200, 4): 0.02,
+#                  (400, 0.5): 0.0003, (400, 1): 0.0003, (400, 2): 0.001, (400, 4): 0.004}
+# resolution = 100
+# alpha = 4
+
+# grid = finite.UniformPeriodicGrid(resolution, 5)
+# x = grid.values
+
+# u = np.zeros(resolution)
+# nu = 1e-2
+# burgers = equations.BurgersFI(u, nu, 6, grid)
+# ts = timesteppers.CrankNicolsonFI(burgers)
+
+# IC = 0*x
+# for i, xx in enumerate(x):
+#     if xx > 1 and xx <= 2:
+#         IC[i] = (xx-1)
+#     elif xx > 2 and xx < 3:
+#         IC[i] = (3-xx)
+
+# u[:] = IC
+# dt = alpha*grid.dx
+
+# ts.evolve(dt, 3-1e-5)
+
+# u_target = np.loadtxt('solutions/u_HW8_%i.dat' %resolution)
+# error = np.max(np.abs(u - u_target))
+# error_est = error_burgers[(resolution, alpha)]
+# print("error = ",error)
+# print("err_est =",error_est)
+
+# import pytest
+# import numpy as np
+# import finite
+# import timesteppers
+# import equations
+# resolution = 100
+# alpha = 0.5
+
+# grid = finite.UniformPeriodicGrid(resolution, 5)
+# x = grid.values
+
+# c1 = np.zeros(resolution)
+# c2 = np.zeros(resolution)
+# c1[:] = 1
+# c2[:] = 2
+# D = 1e-2
+# r = 0.5
+
+# dt = alpha*grid.dx
+# X = timesteppers.StateVector([c1,c2])
+# rd = equations.ReactionTwoSpeciesDiffusion(X,D,r,4,grid)
+# ts = timesteppers.CrankNicolsonFI(rd)
+# ts.evolve(dt, 1-1e-5)
